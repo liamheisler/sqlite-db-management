@@ -14,6 +14,7 @@ import pandas as pd
 
 # local imports
 from utils.definitions import *
+from utils.default_ops import *
 
 # database management
 from utils.database import Database
@@ -32,21 +33,79 @@ if EXCEL_FILE.exists():
 else:
     df = pd.DataFrame()
 
-layout = [
+# window config helping
+rowitem_descriptor_box_size = (25, 1)
+rowitem_entry_box_size = (30, 1)
+
+# can i get the engineer's ID from host?
+nameplate_frame = [
+    [sg.Text('Engineer (Last, First)', size=rowitem_descriptor_box_size), sg.InputText(key='Engineer')],
+    [sg.Text('Program', size=rowitem_descriptor_box_size), 
+     sg.Combo(available_programs, readonly=True, key='Program', size=rowitem_entry_box_size)],
+    [sg.Text('Workstream', size=rowitem_descriptor_box_size), 
+     sg.Combo(available_workstreams, readonly=True, key='Workstream', size=rowitem_entry_box_size)],
+    [sg.Text('Project Name', size=rowitem_descriptor_box_size), sg.InputText(key='Project_Name')],
+    [sg.Text('PD Number', size=rowitem_descriptor_box_size), sg.InputText(key='PD_Number')]
+]
+
+project_spec_frame = [
+    [sg.Text('Target Completion Date', size=rowitem_descriptor_box_size), sg.Text('--- fill with calendar selector ---', size=rowitem_descriptor_box_size)],
+    [sg.Text('Circuit(s) (separate by comma)', size=rowitem_descriptor_box_size), sg.InputText(key='Project_Circuit')],
+    [sg.Text('Mileage', size=rowitem_descriptor_box_size), sg.InputText(key='Mileage')],
+    [sg.Text('Primary Solution', size=rowitem_descriptor_box_size),
+     sg.Combo(available_primary_solns, readonly=True, key='Primary_Solution', size=rowitem_entry_box_size)],
+    [sg.Text('Secondary Solution', size=rowitem_descriptor_box_size),
+     sg.Combo(available_secondary_solns, readonly=True, key='Secondary_Solution', size=rowitem_entry_box_size)],
+    [sg.Text('Solid or Fused | Pre-Period', size=rowitem_descriptor_box_size),
+     sg.Combo(available_solid_fused, readonly=True, key='Pre_SolidFused', size=rowitem_entry_box_size)],
+    [sg.Text('Solid or Fused | Post-Period', size=rowitem_descriptor_box_size),
+     sg.Combo(available_solid_fused, readonly=True, key='Post_SolidFused', size=rowitem_entry_box_size)],
+    [sg.Text('Distribution Segment | Pre-Period', size=rowitem_descriptor_box_size),
+     sg.Combo(available_segments, readonly=True, key='Pre_Dist_Segment', size=rowitem_entry_box_size)],
+    [sg.Text('Distribution Segment | Post-Period', size=rowitem_descriptor_box_size),
+     sg.Combo(available_segments, readonly=True, key='Post_Dist_Segment', size=rowitem_entry_box_size)],
+]
+
+# use a multi line for transformers? or just 1 line withi commas?
+customer_spec_frame = [
+    [sg.Text('by Circuit', size=rowitem_descriptor_box_size), sg.InputText(key='CustSpec_Circuit')],
+    [sg.Text('by Recloser Section', size=rowitem_descriptor_box_size), sg.InputText(key='CustSpec_RecloserSect')],
+    [sg.Text('by URD Section', size=rowitem_descriptor_box_size), sg.InputText(key='CustSpec_URDSect')],
+    [sg.Text('by Transformers', size=rowitem_descriptor_box_size), sg.InputText(key='CustSpec_Trfs')]
+]
+
+financial_and_rel_spec_tab = [
+    [sg.Text('Estimated ACI', size=rowitem_descriptor_box_size), sg.InputText(key='Estimated_ACI')],
+    [sg.Text('Estimated Cost', size=rowitem_descriptor_box_size), sg.InputText(key='Estimated_Cost')]
+]
+
+submit_project_tab_layout = [
     [sg.Text('Please fill out the following fields:')],
-    [sg.Text('Name', size=(15,1)), sg.InputText(key='Name')],
-    [sg.Text('City', size=(15,1)), sg.InputText(key='City')],
-    [sg.Text('Favorite Colour', size=(15,1)), sg.Combo(['Green', 'Blue', 'Red'], key='Favorite Colour')],
-    [sg.Text('I speak', size=(15,1)),
-                            sg.Checkbox('German', key='German'),
-                            sg.Checkbox('Spanish', key='Spanish'),
-                            sg.Checkbox('English', key='English')],
-    [sg.Text('No. of Children', size=(15,1)), sg.Spin([i for i in range(0,16)],
-                                                       initial_value=0, key='Children')],
+    [sg.Frame('Project Nameplate', nameplate_frame)],
+    [sg.Frame('Project Specification', project_spec_frame)],
+    [sg.Frame('Reliability & Financial Specification', financial_and_rel_spec_tab)],   
+    [sg.Frame('Customer Specification', customer_spec_frame)],
     [sg.Submit(), sg.Button('Clear'), sg.Exit()]
 ]
 
-window = sg.Window('Simple data entry form', layout)
+edit_projects_tab_layout = [
+    [sg.Text('blah', size=rowitem_descriptor_box_size)]
+]
+
+query_projects_tab_layout = [
+    [sg.Text('blah', size=rowitem_descriptor_box_size)]
+]
+
+layout = [
+    # format is sg.TabGroup([[tab1, tab2]]). kinda ugly
+    [sg.TabGroup([[
+        sg.Tab('Submit Projects', submit_project_tab_layout, key="tab_submitProjs"),
+         sg.Tab('Edit Projects', edit_projects_tab_layout, key="tab_editProjs"),
+            sg.Tab('Query Projects', query_projects_tab_layout, key="tab_queryProjs")
+    ]], key="tab_group")]
+]
+
+window = sg.Window('Project Effectiveness Database', layout)
 
 def clear_input():
     for key in values:
@@ -61,9 +120,17 @@ while True:
     if event == 'Clear':
         clear_input()
     if event == 'Submit':
-        # should insert a new row
-        db.insert_row(values)
-        sg.popup('Data saved!')
+        # archaic method -- more for testing or lazily setting up the table... i know :(
+        #df = pd.DataFrame(values, index=[0])
+        #df.to_sql('projects', con=db.connection, if_exists='replace')
+        
+        # insert new row
+        insert_row_check = db.insert_row(values)
+
+        # if we actually submitted the row, throw a pop up
+        if insert_row_check: sg.popup('Project submitted.')
+
+        # once submitted, get rid of the data in the boxes
         clear_input()
 
 window.close()

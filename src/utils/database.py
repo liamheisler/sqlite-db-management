@@ -22,23 +22,37 @@ class Database:
         return pd.read_sql(sql, con=self.connection)
     
     def insert_row(self, row_dict):
-        # Preparing the SQL query. We need to handle the keys and values separately.
-        columns = ', '.join([f'"{column}"' for column in row_dict.keys()])
-        placeholders = ', '.join(['?'] * len(row_dict))  # placeholders for values
-        sql = f'INSERT INTO testing ({columns}) VALUES ({placeholders})'
+        # preparing the query
+        insert_cols = []
+        insert_vals = []
 
-        # Values as a tuple
-        values = tuple(row_dict.values())
+        for column, value in row_dict.items():
+            if "tab" not in column:
+                 insert_cols.append(column)
+                 insert_vals.append(value)
+
+        insert_cols_str = ', '.join([f'"{column}"' for column in row_dict.keys() if "tab" not in column])
+        placeholders = ', '.join(['?'] * len(insert_vals))  # placeholders for values
+        
+        # generate the query
+        sql = f'INSERT INTO projects({insert_cols_str}) VALUES ({placeholders})'
 
         # Executing the SQL command
-        try:
-            cursor = self.connection.cursor()
-            print(sql)
-            cursor.execute(sql, values)  # Using parameter substitution for values
-            self.connection.commit()  # Committing the changes
-        except sqlite.Error as e:
-            print(f"An error occurred: {e}")
-        finally:
-            cursor.close()  # It's a good practice to close the cursor
+        actually_enter_row = False
 
-        print(row_dict)
+        if actually_enter_row:
+            try:
+                cursor = self.connection.cursor()
+                print(sql)
+                cursor.execute(sql, tuple(insert_vals))  # parameter substitution for values
+                self.connection.commit()  # committing the changes
+                
+                return True
+            except sqlite.Error as e:
+                print(f"An error occurred: {e}")
+                return False
+            finally:
+                cursor.close() # good practice
+        else:
+            print("testing mode: ", sql)
+            return False
