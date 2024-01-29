@@ -45,3 +45,26 @@ available_secondary_solns = [
     'Enhancement',
     'Recloser'
 ]
+
+gui_keys_to_write_to_db = [
+    'Project_ID',
+    'Engineer',
+    'Program',
+    'Workstream',
+    'Project_Name',
+    'PD_Number',
+    'Project_Circuit',
+    'Mileage',
+    'Primary_Solution',
+    'Secondary_Solution',
+    'Pre_SolidFused',
+    'Post_SolidFused',
+    'Pre_Dist_Segment',
+    'Post_Dist_Segment',
+    'Estimated_ACI',
+    'Estimated_Cost',
+    'CustSpec_Circuit',
+    'CustSpec_RecloserSect',
+    'CustSpec_URDSect',
+    'CustSpec_Trfs'
+]

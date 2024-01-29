@@ -85,15 +85,20 @@ submit_project_tab_layout = [
     [sg.Frame('Project Specification', project_spec_frame)],
     [sg.Frame('Reliability & Financial Specification', financial_and_rel_spec_tab)],   
     [sg.Frame('Customer Specification', customer_spec_frame)],
-    [sg.Submit(), sg.Button('Clear'), sg.Exit()]
+    [sg.Submit(), sg.Button('Clear')]
 ]
+
+# ---- Edit Projects ----
 
 edit_projects_tab_layout = [
-    [sg.Text('blah', size=rowitem_descriptor_box_size)]
+    [sg.Button('Fetch Projects', key='fetch_projects'), sg.Button('Edit Selected Project', key='edit_selected_project')],
+    [sg.Listbox(values=[], size=(75, 10), key='listbox_select_projects')]
 ]
 
+# ---- Query Projects ----
+
 query_projects_tab_layout = [
-    [sg.Text('blah', size=rowitem_descriptor_box_size)]
+    [sg.Multiline('blah', size=(15, 15))]
 ]
 
 layout = [
@@ -102,7 +107,8 @@ layout = [
         sg.Tab('Submit Projects', submit_project_tab_layout, key="tab_submitProjs"),
          sg.Tab('Edit Projects', edit_projects_tab_layout, key="tab_editProjs"),
             sg.Tab('Query Projects', query_projects_tab_layout, key="tab_queryProjs")
-    ]], key="tab_group")]
+    ]], key="tab_group")],
+    [sg.Exit()]
 ]
 
 window = sg.Window('Project Effectiveness Database', layout)
@@ -132,6 +138,10 @@ while True:
 
         # once submitted, get rid of the data in the boxes
         clear_input()
+    
+    if event == 'fetch_projects':
+        display_list = db.get_project_data_for_lbox()
+        window['listbox_select_projects'].update(display_list)
 
 window.close()
 db.disconnect()
